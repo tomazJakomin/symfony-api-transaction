@@ -14,6 +14,13 @@ customer balance
 
 ## Json documentation
 Documentation is available at api/doc.json
+
+## Used technologies
+* Symfony 5
+* Php 7.4
+* Mysql 8
+* Phpunit
+* NelmioApiDocBundle
                                                    
 ## API functionalities
 * Each new created customer is assigned a random bonus which is set on every 3rd transaction
