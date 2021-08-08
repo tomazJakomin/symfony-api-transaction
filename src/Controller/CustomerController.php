@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Customer;
+use App\Repository\CustomerRepository;
+use Doctrine\DBAL\Exception;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+
+class CustomerController extends AbstractController
+{
+	/**
+	 * @var CustomerRepository
+	 */
+	private $customerRepository;
+
+	public function __construct(CustomerRepository $customerRepository)
+	{
+		$this->customerRepository = $customerRepository;
+	}
+
+	/**
+	 * @Route("/customers/add", name="add_customer", methods={"POST"})
+	 */
+	public function addCustomer(Request $request, ValidatorInterface $validator): JsonResponse
+	{
+		$data = json_decode($request->getContent(), true);
+
+		$customer = new Customer();
+		$customer
+			->setFirstName($data['firstName'] ?? '')
+			->setLastName($data['lastName'] ?? '')
+			->setEmail($data['email'] ?? '')
+			->setCountry($data['country'] ?? '')
+			->setGender($data['gender'] ?? '');
+
+		$errors = $validator->validate($customer);
+		if (count($errors) > 0) {
+			$errorResponse = [];
+			foreach ($errors as $error) {
+				$errorResponse[$error->getPropertyPath()] = $error->getMessage();
+			}
+
+			return new JsonResponse(['error' => $errorResponse]);
+		}
+
+		$randomBonus = random_int(5, 20);
+		$customer->setBonus($randomBonus);
+		try {
+			$this->customerRepository->saveCustomer($customer);
+		} catch (Exception $exception) {
+			return new JsonResponse(['status' => "Provided user data is not valid"], Response::HTTP_BAD_REQUEST);
+		}
+
+		return new JsonResponse(['status' => 'Customer created!'], Response::HTTP_CREATED);
+	}
+}
