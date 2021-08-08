@@ -29,15 +29,6 @@ class CustomerController extends AbstractController
 
 	/**
 	 * @Route("/customers", name="add_customer", methods={"POST"})
-	 * @SWG\Response(
-	 *     response=200,
-	 *     description="Returns the rewards of an user",
-	 *     @SWG\Schema(
-	 *         type="array",
-	 *         @SWG\Items(ref=@Model(type=Customer::class, groups={"full"}))
-	 *     )
-	 * )
-	 * @SWG\Tag(name="cusotmers")
 	 */
 	public function addCustomer(Request $request, ValidatorInterface $validator): JsonResponse
 	{

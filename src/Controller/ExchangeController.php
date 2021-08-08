@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Entity\CustomerBonusTransactions;
 use App\Entity\Transactions;
+use App\options\TransactionTypes;
 use App\Repository\CustomerRepository;
 use App\Repository\TransactionsRepository;
 use App\Services\BonusCalculationServiceInterface;
@@ -19,17 +20,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ExchangeController extends AbstractController
 {
-	/**
-	 * @Route("/exchange", name="exchange")
-	 */
-	public function index(): Response
-	{
-		return $this->json([
-			                   'message' => 'Welcome to your new controller!',
-			                   'path'    => 'src/Controller/ExchangeController.php',
-		                   ]);
-	}
-
 	/**
 	 * @Route("/exchange/deposit", name="deposit_money", methods={"POST"})
 	 */
@@ -46,7 +36,7 @@ class ExchangeController extends AbstractController
 		$transaction = new Transactions();
 		$transaction
 			->setCustomer($customer)
-			->setType('deposit')
+			->setType(TransactionTypes::DEPOSIT_TYPE)
 			->setValue($data['value'] ?? 0.00)
 			->setDateCreated(new DateTime());
 
@@ -83,7 +73,7 @@ class ExchangeController extends AbstractController
 			return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_LOCKED);
 		}
 
-		return new JsonResponse(['message' => 'Successful deposit']);
+		return new JsonResponse(['message' => 'success']);
 	}
 
 	/**
@@ -103,13 +93,13 @@ class ExchangeController extends AbstractController
 		$customer = $customerRepository->find($customerId);
 
 		if ($customer === null) {
-			return new JsonResponse(['message' => "Customer not found"], Response::HTTP_NOT_FOUND);
+			return new JsonResponse(['error' => "Customer not found"], Response::HTTP_NOT_FOUND);
 		}
 
 		$transaction = new Transactions();
 		$transaction
 			->setCustomer($customer)
-			->setType('withdraw')
+			->setType(TransactionTypes::WITHDRAW_TYPE)
 			->setValue($value);
 
 		$errors = $validator->validate($transaction);
@@ -120,11 +110,11 @@ class ExchangeController extends AbstractController
 				$errorResponse[$error->getPropertyPath()] = $error->getMessage();
 			}
 
-			return new JsonResponse(['message' => $errorResponse]);
+			return new JsonResponse(['error' => $errorResponse]);
 		}
 
 		if (empty($value) || $value <= 0.0 || $customer->getBalance() < $value) {
-			return new JsonResponse(['message' => "This amount can not be withdraw"], Response::HTTP_BAD_REQUEST);
+			return new JsonResponse(['error' => "This amount can not be withdraw"], Response::HTTP_BAD_REQUEST);
 		}
 
 		try {
@@ -134,7 +124,7 @@ class ExchangeController extends AbstractController
 			return new JsonResponse(['error' => $exception->getMessage()]);
 		}
 
-		return new JsonResponse(['message' => 'money was withdrawn successfully']);
+		return new JsonResponse(['message' => 'success']);
 	}
 
 }

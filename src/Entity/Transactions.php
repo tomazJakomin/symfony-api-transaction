@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\TransactionsRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\options\TransactionTypes;
 
 /**
  * @ORM\Entity(repositoryClass=TransactionsRepository::class)
@@ -28,6 +29,7 @@ class Transactions
     /**
      * @ORM\Column(type="string", length=100)
      * @Assert\NotBlank
+     * @Assert\Choice(callback={"App\options\TransactionTypes", "getAllOptions"})
      */
     private $type;
 
