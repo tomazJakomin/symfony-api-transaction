@@ -7,6 +7,7 @@ Clone the repository and run composer install.
 Point your local server with php to the public/index.php
 Edit the .env file to use your mysql server.
 DATABASE_URL=mysql://<DBusername>:@<location>:3306/<dbName>?serverVersion=8.0
+Run migrations (bin/console doctrine:migrations:migrate)
                                                            
 ## Solved problems
 Used DB locks to support concurrent writes and reads to the DB when editing the 
