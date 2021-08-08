@@ -131,7 +131,7 @@ class ExchangeController extends AbstractController
 			$customerRepository->decreaseAmount($customerId, $value, $customer->getVersion());
 			$transactionsRepository->save($transaction);
 		} catch (Exception $exception) {
-			return new JsonResponse(['message' => $exception->getMessage()]);
+			return new JsonResponse(['error' => $exception->getMessage()]);
 		}
 
 		return new JsonResponse(['message' => 'money was withdrawn successfully']);

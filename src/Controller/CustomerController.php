@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Repository\CustomerRepository;
 use Doctrine\DBAL\Exception;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Swagger\Annotations as SWG;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,7 +28,16 @@ class CustomerController extends AbstractController
 	}
 
 	/**
-	 * @Route("/customers/add", name="add_customer", methods={"POST"})
+	 * @Route("/customers", name="add_customer", methods={"POST"})
+	 * @SWG\Response(
+	 *     response=200,
+	 *     description="Returns the rewards of an user",
+	 *     @SWG\Schema(
+	 *         type="array",
+	 *         @SWG\Items(ref=@Model(type=Customer::class, groups={"full"}))
+	 *     )
+	 * )
+	 * @SWG\Tag(name="cusotmers")
 	 */
 	public function addCustomer(Request $request, ValidatorInterface $validator): JsonResponse
 	{
@@ -55,9 +66,45 @@ class CustomerController extends AbstractController
 		try {
 			$this->customerRepository->saveCustomer($customer);
 		} catch (Exception $exception) {
-			return new JsonResponse(['status' => "Provided user data is not valid"], Response::HTTP_BAD_REQUEST);
+			return new JsonResponse(['error' => "Provided user data is not valid"], Response::HTTP_BAD_REQUEST);
 		}
 
-		return new JsonResponse(['status' => 'Customer created!'], Response::HTTP_CREATED);
+		return new JsonResponse([], Response::HTTP_CREATED);
+	}
+
+	/**
+	 * @Route("/customers", name="updated_customer", methods={"PATCH"})
+	 */
+	public function updateCustomer(CustomerRepository $customerRepository): JsonResponse
+	{
+		$customer = new Customer();
+
+		if (!empty($data['firstName'] ?? '')) {
+			$customer->setFirstName($data['firstName']);
+		}
+
+		if (!empty($data['lastName'] ?? '')) {
+		   $customer->setLastName($data['lastName']);
+		}
+
+		if (!empty($data['email'] ?? '')) {
+		   $customer->setEmail($data['email']);
+		}
+
+		if (!empty($data['country'] ?? '')) {
+		   $customer->setCountry($data['country']);
+		}
+
+		if (!empty($data['gender'] ?? '')) {
+			$customer->setGender($data['gender']);
+		}
+
+		try {
+			$customerRepository->saveCustomer($customer);
+		} catch (Exception $exception) {
+			return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
+		}
+
+		return new JsonResponse([], JsonResponse::HTTP_OK);
 	}
 }
