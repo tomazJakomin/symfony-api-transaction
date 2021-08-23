@@ -7,5 +7,4 @@ RUN apt-get update; \
         php7.4-mysql; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
-
-CMD wait-for-it mysql:3306 -- php bin/console doctrine:migrations:migrate ;
+CMD php bin/console doctrine:migrations:migrate ;

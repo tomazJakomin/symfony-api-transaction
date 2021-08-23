@@ -13,6 +13,7 @@ services:
             - MYSQL_DATABASE=bank
             - MYSQL_USER=app
             - MYSQL_PASSWORD=pass
+            - MYSQL_DATABASE=bank
         ports:
             - '14001:3306'
 
