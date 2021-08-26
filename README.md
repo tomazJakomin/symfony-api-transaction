@@ -1,13 +1,17 @@
-# Symfony 5 API Transaction
-This project is using symfony 5 to prepare simple API that has customers which              
+# Dockerized Symfony 5 API
+This project is using symfony 5 to prepare simple REST API that has customers which              
 can deposit and retrieve credit.
 
 ## Getting started
-Clone the repository and run composer install.
-Point your local server with php to the public/index.php
-Edit the .env file to use your mysql server.
-DATABASE_URL=mysql://<DBusername>:@<location>:3306/<dbName>?serverVersion=8.0
-Run migrations (bin/console doctrine:migrations:migrate)
+Clone the repository and move to project root
+
+run composer install.
+In the root of the project run ``docker-compose up -d``
+
+When the server is booted run: `docker-compose exec php-fpm php bin/console doctrine:migrations:migrate`
+Select `yes` option. The DB migrations will be executed
+
+Visit the running webservice on [localhost:14000](http://localhost:14000)
                                                            
 ## Solved problems
 Used DB locks to support concurrent writes and reads to the DB when editing the 
@@ -22,6 +26,7 @@ Documentation is available at api/doc.json
 * Mysql 8
 * Phpunit
 * NelmioApiDocBundle
+* Docker
                                                    
 ## API functionalities
 * Each new created customer is assigned a random bonus which is set on every 3rd transaction

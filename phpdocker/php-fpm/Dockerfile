@@ -7,4 +7,3 @@ RUN apt-get update; \
         php7.4-mysql; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* \
-CMD php bin/console doctrine:migrations:migrate ;
