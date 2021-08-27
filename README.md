@@ -5,7 +5,8 @@ can deposit and retrieve credit.
 ## Getting started
 Clone the repository and move to project root
 
-run composer install.
+run `composer install`
+
 In the root of the project run ``docker-compose up -d``
 
 When the server is booted run: `docker-compose exec php-fpm php bin/console doctrine:migrations:migrate`

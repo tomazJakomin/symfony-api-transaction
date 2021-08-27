@@ -49,7 +49,7 @@ class ExchangeController extends AbstractController
 	 *     name="value",
 	 *     in="body",
 	 *     @SWG\Schema(
-	 *      type="float"
+	 *      type="number"
 	 *      )
 	 * )
 	 */
@@ -136,7 +136,7 @@ class ExchangeController extends AbstractController
 	 *     name="value",
 	 *     in="body",
 	 *     @SWG\Schema(
-	 *      type="float"
+	 *      type="number"
 	 *      )
 	 * )
 	 */
