@@ -2,14 +2,11 @@
 
 namespace App\Controller;
 
-use App\Entity\Customer;
-use App\Entity\CustomerBonusTransactions;
-use App\Entity\Transactions;
-use App\options\TransactionTypes;
+use App\Factories\BonusFactory;
+use App\Factories\TransactionFactory;
 use App\Repository\CustomerRepository;
 use App\Repository\TransactionsRepository;
 use App\Services\BonusCalculationServiceInterface;
-use DateTime;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,29 +14,67 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Swagger\Annotations as OA;
+use Swagger\Annotations as SWG;
 
 class ExchangeController extends AbstractController
 {
 	/**
-	 * @Route("/exchange/deposit", name="deposit_money", methods={"POST"})
+	 * @Route("/exchange/deposit", name="deposit_money", methods={"POST"}, requirements={})
+	 * @OA\Response(
+	 *     response="200",
+	 *     description="success",
+	 * ),
+	 * @OA\Response(
+	 *     response="404",
+	 *     description="customer not found",
+	 * ),
+	 * @OA\Response(
+	 *     response="400",
+	 *     description="value is not allowed",
+	 * ),
+	 * @OA\Response(
+	 *     response="423",
+	 *     description="data integrity constrain",
+	 * )
+	 *
+	 * @SWG\Parameter (
+	 *     name="customerId",
+	 *     in="body",
+	 *     @SWG\Schema(
+	 *      type="integer"
+	 *      )
+	 *     ),
+	 * @SWG\Parameter (
+	 *     name="value",
+	 *     in="body",
+	 *     @SWG\Schema(
+	 *      type="float"
+	 *      )
+	 * )
 	 */
 	public function depositMoney(
 		Request $request,
 		CustomerRepository $customerRepository,
 		TransactionsRepository $transactionsRepository,
 		ValidatorInterface $validator,
-		BonusCalculationServiceInterface $bonusCalculationService
+		BonusCalculationServiceInterface $bonusCalculationService,
+		TransactionFactory $transactionFactory,
+		BonusFactory $bonusFactory
 	): Response {
 		$data = json_decode($request->getContent(), true);
 		$customer = $customerRepository->find($data['customerId'] ?? 0);
 
-		$transaction = new Transactions();
-		$transaction
-			->setCustomer($customer)
-			->setType(TransactionTypes::DEPOSIT_TYPE)
-			->setValue($data['value'] ?? 0.00)
-			->setDateCreated(new DateTime());
+		if ($customer === null) {
+			return new JsonResponse(['error' => "Customer not found"], Response::HTTP_NOT_FOUND);
+		}
 
+		$value = $data['value'] ?? 0.00;
+		if (empty($value) || $value <= 0.00) {
+			return new JsonResponse(['error' => "This amount can not be deposited"], Response::HTTP_BAD_REQUEST);
+		}
+
+		$transaction = $transactionFactory->createForDeposit($customer, $value);
 		$errors = $validator->validate($transaction);
 
 		if (count($errors) > 0) {
@@ -50,19 +85,14 @@ class ExchangeController extends AbstractController
 
 			return new JsonResponse(['error' => $errorResponse]);
 		}
-
-		$number = $transactionsRepository->count(['customer' => $customer->getId()]);
-		if ($bonusCalculationService->isEligibleForBonus($number + 1)) {
+		$numberOfTransactions = $transactionsRepository->count(['customer' => $customer->getId()]);
+		if ($bonusCalculationService->isEligibleForBonus($numberOfTransactions + 1)) {
 			$valueBonus = $bonusCalculationService->getCalculatedBonus(
 				$transaction->getValue(),
 				$customer->getBonus()
 			);
 
-			$bonusTransaction = new CustomerBonusTransactions();
-			$bonusTransaction
-				->setCustomer($customer)
-				->setAmount($valueBonus);
-
+			$bonusTransaction = $bonusFactory->createBonusFrom($customer, $valueBonus);
 			$transaction->setBonus($bonusTransaction);
 		}
 
@@ -78,14 +108,45 @@ class ExchangeController extends AbstractController
 
 	/**
 	 * @Route("/exchange/withdraw", name="withdraw_money", methods={"POST"})
+	 * @OA\Response(
+	 *     response="200",
+	 *     description="success",
+	 * ),
+	 * @OA\Response(
+	 *     response="404",
+	 *     description="customer not found",
+	 * ),
+	 * @OA\Response(
+	 *     response="400",
+	 *     description="value is not correct",
+	 * ),
+	 * @OA\Response(
+	 *     response="423",
+	 *     description="data integrity constrain",
+	 * )
+	 *
+	 * @SWG\Parameter (
+	 *     name="customerId",
+	 *     in="body",
+	 *     @SWG\Schema(
+	 *      type="integer"
+	 *      )
+	 *     ),
+	 * @SWG\Parameter (
+	 *     name="value",
+	 *     in="body",
+	 *     @SWG\Schema(
+	 *      type="float"
+	 *      )
+	 * )
 	 */
 	public function withdrawMoney(
 		Request $request,
 		CustomerRepository $customerRepository,
 		TransactionsRepository $transactionsRepository,
-		ValidatorInterface $validator
+		ValidatorInterface $validator,
+		TransactionFactory $transactionFactory
 	): Response {
-
 		$data = json_decode($request->getContent(), true);
 		$value = $data['value'] ?? 0.0;
 		$customerId = $data['customerId'] ?? 0;
@@ -96,12 +157,7 @@ class ExchangeController extends AbstractController
 			return new JsonResponse(['error' => "Customer not found"], Response::HTTP_NOT_FOUND);
 		}
 
-		$transaction = new Transactions();
-		$transaction
-			->setCustomer($customer)
-			->setType(TransactionTypes::WITHDRAW_TYPE)
-			->setValue($value);
-
+		$transaction = $transactionFactory->createForWithdraw($customer, $value);
 		$errors = $validator->validate($transaction);
 
 		if (count($errors) > 0) {
@@ -121,7 +177,7 @@ class ExchangeController extends AbstractController
 			$customerRepository->decreaseAmount($customerId, $value, $customer->getVersion());
 			$transactionsRepository->save($transaction);
 		} catch (Exception $exception) {
-			return new JsonResponse(['error' => $exception->getMessage()]);
+			return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_LOCKED);
 		}
 
 		return new JsonResponse(['message' => 'success']);

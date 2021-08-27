@@ -5,13 +5,10 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Repository\CustomerRepository;
 use Doctrine\DBAL\Exception;
-use Nelmio\ApiDocBundle\Annotation\Model;
-use Swagger\Annotations as SWG;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -52,15 +49,14 @@ class CustomerController extends AbstractController
 			return new JsonResponse(['error' => $errorResponse]);
 		}
 
-		$randomBonus = random_int(5, 20);
-		$customer->setBonus($randomBonus);
+		$customer->setBonus($this->getAssignedBonus());
 		try {
 			$this->customerRepository->saveCustomer($customer);
 		} catch (Exception $exception) {
 			return new JsonResponse(['error' => "Provided user data is not valid"], Response::HTTP_BAD_REQUEST);
 		}
 
-		return new JsonResponse([], Response::HTTP_CREATED);
+		return new JsonResponse(['message' => "User created"], Response::HTTP_CREATED);
 	}
 
 	/**
@@ -96,6 +92,11 @@ class CustomerController extends AbstractController
 			return new JsonResponse(['error' => $exception->getMessage()], JsonResponse::HTTP_BAD_REQUEST);
 		}
 
-		return new JsonResponse([], JsonResponse::HTTP_OK);
+		return new JsonResponse(['message' => 'User updated'], JsonResponse::HTTP_OK);
+	}
+
+	private function getAssignedBonus(): int
+	{
+		return random_int(5, 20);
 	}
 }

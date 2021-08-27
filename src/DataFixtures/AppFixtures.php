@@ -17,7 +17,8 @@ class AppFixtures extends Fixture
 				->setLastName('faker' . $i)
 				->setEmail('fake' . $i . '@gmail.com')
 				->setCountry('Germany')
-				->setGender('male');
+				->setGender('male')
+				->setBonus(random_int(5, 20));
 			$manager->persist($customer);
 		}
 		$manager->flush();

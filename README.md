@@ -17,8 +17,11 @@ Visit the running webservice on [localhost:14000](http://localhost:14000)
 Used DB locks to support concurrent writes and reads to the DB when editing the 
 customer balance
 
-## Json documentation
-Documentation is available at api/doc.json
+## API documentation
+Documentation is available at `api/doc`
+
+## Test coverage
+Basic test coverage for bonus calculations and main deposit controller method 
 
 ## Used technologies
 * Symfony 5
@@ -33,4 +36,4 @@ Documentation is available at api/doc.json
 * Customer can deposit credit
 * Customer can withdraw credit
 * Bonus credit assigned on every 3rd deposit is counted separately
-* There is an report endpoint for the last 7 days transactions
+* There is a report endpoint for the last 7 days transactions
